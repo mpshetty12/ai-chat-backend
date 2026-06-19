@@ -2,11 +2,17 @@ from sqlalchemy.orm import Session
 from models.chat import ChatMessage
 from  models.chat_session import ChatSession
 
+# from cache.redis import redis_client
+# import json
+
 def save_message(db: Session, session_id: int, message: str, role: str):
     msg = ChatMessage(session_id=session_id, message=message, role=role)
     db.add(msg)
     db.commit()
     db.refresh(msg)
+
+    #clear old cache
+    # redis_client.delete(f"chat_Sessin:{session_id}")
 
     return msg
 
@@ -23,4 +29,34 @@ def create_session(db: Session, user_id: int):
 
 def get_session_messages(db: Session, session_id: int):
     return db.query(ChatMessage).filter(ChatMessage.session_id ==  session_id).all()
+    # cachey_key = f"chat_session:{session_id}"
+
+    # #step 1 - check cache
+    # cached_data = redis_client.get(cachey_key)
+
+    # if cached_data:
+    #     print("CACHE HIT")
+    #     return json.loads(cached_data)
+    
+    # #step 2 - fetch from db
+    # print("DB HIT")
+    
+    # messages = db.query(ChatMessage).filter(ChatMessage.session_id == session_id).all()
+    # result = []
+
+    # for msg in messages:
+    #     result.append({
+    #         "id" : msg.id,
+    #         "role": msg.role,
+    #         "message": msg.message
+    #     })
+
+    # #step 3 - store in redis
+    # redis_client.set(
+    #     cachey_key,
+    #     json.dumps(result),
+    #     ex=300
+    # )
+
+    # return result
 
