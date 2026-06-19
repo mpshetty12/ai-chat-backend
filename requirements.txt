@@ -1,0 +1,12 @@
+python-jose[cryptography]
+python-multipart
+fastapi
+uvicorn
+sqlalchemy
+python-dotenv
+fastapi-users[sqlalchemy]
+imagekitio==4.0.0
+uvicorn[standard]
+aiosqlite
+bcrypt==4.0.1
+passlib==1.7.4
