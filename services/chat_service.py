@@ -2,11 +2,28 @@ from sqlalchemy.orm import Session
 from models.chat import ChatMessage
 from  models.chat_session import ChatSession
 
+from fastapi import HTTPException
+
 # from cache.redis import redis_client
 # import json
 
-def save_message(db: Session, session_id: int, message: str, role: str):
-    msg = ChatMessage(session_id=session_id, message=message, role=role)
+def save_message(db: Session, session_id: int, user_id: int, message: str, role: str):
+    session = db.query(ChatSession).filter(
+        ChatSession.id == session_id,
+        ChatSession.user_id == user_id
+    ).first()
+
+    if not session:
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed"
+        )
+
+    msg = ChatMessage(
+        session_id=session_id,
+        message=message,
+        role=role
+    )
     db.add(msg)
     db.commit()
     db.refresh(msg)
@@ -27,8 +44,18 @@ def create_session(db: Session, user_id: int):
 
     return session
 
-def get_session_messages(db: Session, session_id: int):
-    return db.query(ChatMessage).filter(ChatMessage.session_id ==  session_id).all()
+def get_session_messages(db: Session, session_id: int, user_id: int):
+    session = db.query(ChatSession).filter(
+        ChatSession.id == session_id,
+        ChatSession.user_id == user_id
+    ).first()
+
+    if not session:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    messages = db.query(ChatMessage).filter(ChatMessage.session_id == session_id).all()
+
+    return messages
     # cachey_key = f"chat_session:{session_id}"
 
     # #step 1 - check cache
